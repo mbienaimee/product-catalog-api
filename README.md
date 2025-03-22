@@ -30,7 +30,7 @@ This is a **Product Catalog API** that allows you to **manage products, categori
 ### 1️⃣ Clone the repository:
 
 ```sh
-git clone https://github.com/your-username/product-catalog-api.git
+git clone https://github.com/mbienaimee/product-catalog-api.git
 cd product-catalog-api
 ```
 
@@ -124,15 +124,5 @@ To run tests (if applicable):
 ```sh
 npm test
 ```
-
----
-
-## 🛠️ Contributing
-
-1. Fork the repo
-2. Create a new branch (`git checkout -b feature-branch`)
-3. Commit changes (`git commit -m 'Add new feature'`)
-4. Push to your branch (`git push origin feature-branch`)
-5. Open a **Pull Request**
 
 ---
