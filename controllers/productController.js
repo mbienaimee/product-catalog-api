@@ -1,18 +1,15 @@
 const Product = require("../models/Product");
 const Category = require("../models/Category");
 
-// Create a new product
 exports.createProduct = async (req, res) => {
   try {
     const { name, description, price, category, stockQuantity, variants } =
       req.body;
 
-    // Handle image paths from multer
     const images = req.files
       ? req.files.map((file) => `/uploads/${file.filename}`)
       : [];
 
-    // Check if category exists
     if (category) {
       const existingCategory = await Category.findById(category);
       if (!existingCategory) {
@@ -39,12 +36,10 @@ exports.createProduct = async (req, res) => {
   }
 };
 
-// Get all products
 exports.getAllProducts = async (req, res) => {
   try {
     const { name, category, minPrice, maxPrice, inStock } = req.query;
 
-    // Build query
     const query = {};
 
     if (name) query.name = { $regex: name, $options: "i" };
@@ -63,7 +58,6 @@ exports.getAllProducts = async (req, res) => {
   }
 };
 
-// Get a single product
 exports.getProductById = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id).populate("category");
@@ -80,13 +74,10 @@ exports.getProductById = async (req, res) => {
   }
 };
 
-// Update a product
 exports.updateProduct = async (req, res) => {
   try {
     const { name, description, price, category, stockQuantity, variants } =
       req.body;
-
-    // Process new images if uploaded
     let images = [];
     if (req.files && req.files.length > 0) {
       images = req.files.map((file) => `/uploads/${file.filename}`);
@@ -120,8 +111,6 @@ exports.updateProduct = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
-
-// Delete a product
 exports.deleteProduct = async (req, res) => {
   try {
     const product = await Product.findByIdAndDelete(req.params.id);
@@ -137,8 +126,6 @@ exports.deleteProduct = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
-
-// Get low stock products
 exports.getLowStockProducts = async (req, res) => {
   try {
     const threshold = parseInt(req.query.threshold) || 10;

@@ -57,12 +57,10 @@ const ProductSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Virtual for discounted price
 ProductSchema.virtual("discountedPrice").get(function () {
   return this.price * (1 - this.discount / 100);
 });
 
-// Ensure virtuals are included in JSON responses
 ProductSchema.set("toJSON", { virtuals: true });
 ProductSchema.set("toObject", { virtuals: true });
 

@@ -7,13 +7,10 @@ const {
 } = require("../controllers/authController");
 const auth = require("../middleware/authMiddleware");
 
-// Register route
 router.post("/register", register);
 
-// Login route
 router.post("/login", login);
 
-// Get current user route (protected)
 router.get("/me", auth, getCurrentUser);
 
 module.exports = router;

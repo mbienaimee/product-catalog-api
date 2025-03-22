@@ -1,7 +1,6 @@
 const Category = require("../models/Category");
 const Product = require("../models/Product");
 
-// Create a new category
 exports.createCategory = async (req, res) => {
   try {
     const { name, description } = req.body;
@@ -14,7 +13,6 @@ exports.createCategory = async (req, res) => {
     await category.save();
     res.status(201).json({ success: true, data: category });
   } catch (error) {
-    // Handle duplicate key error (category name already exists)
     if (error.code === 11000) {
       return res
         .status(400)
@@ -24,7 +22,6 @@ exports.createCategory = async (req, res) => {
   }
 };
 
-// Get all categories
 exports.getAllCategories = async (req, res) => {
   try {
     const categories = await Category.find();
@@ -34,7 +31,6 @@ exports.getAllCategories = async (req, res) => {
   }
 };
 
-// Get a single category
 exports.getCategoryById = async (req, res) => {
   try {
     const category = await Category.findById(req.params.id);
@@ -51,7 +47,6 @@ exports.getCategoryById = async (req, res) => {
   }
 };
 
-// Update a category
 exports.updateCategory = async (req, res) => {
   try {
     const { name, description } = req.body;
@@ -70,7 +65,6 @@ exports.updateCategory = async (req, res) => {
 
     res.json({ success: true, data: category });
   } catch (error) {
-    // Handle duplicate key error
     if (error.code === 11000) {
       return res
         .status(400)
@@ -80,10 +74,8 @@ exports.updateCategory = async (req, res) => {
   }
 };
 
-// Delete a category
 exports.deleteCategory = async (req, res) => {
   try {
-    // Check if there are products using this category
     const products = await Product.find({ category: req.params.id });
 
     if (products.length > 0) {

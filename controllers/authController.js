@@ -4,8 +4,6 @@ const jwt = require("jsonwebtoken");
 exports.register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
-
-    // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res
@@ -34,31 +32,23 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
-
-    // Check if user exists
     const user = await User.findOne({ email });
     if (!user) {
       return res
         .status(401)
         .json({ success: false, message: "Invalid credentials" });
     }
-
-    // Check if password is correct
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
       return res
         .status(401)
         .json({ success: false, message: "Invalid credentials" });
     }
-
-    // Check if user is active
     if (!user.isActive) {
       return res
         .status(401)
         .json({ success: false, message: "Account is deactivated" });
     }
-
-    // Create JWT token
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET,
@@ -80,7 +70,6 @@ exports.login = async (req, res) => {
   }
 };
 
-// Protected route to get current user
 exports.getCurrentUser = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password");
