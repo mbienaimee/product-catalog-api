@@ -1,45 +1,46 @@
 const express = require("express");
+const mongoose = require("mongoose");
 const dotenv = require("dotenv");
-const connectDB = require("./config/db");
-const productRoutes = require("./routes/productRoutes");
-const categoryRoutes = require("./routes/categoryRoutes");
-const authRoutes = require("./routes/authRoutes");
-const path = require("path");
-const swaggerUi = require("swagger-ui-express");
+const cors = require("cors");
+const swaggerUI = require("swagger-ui-express");
 const YAML = require("yamljs");
-const swaggerDocument = YAML.load("./swagger.yaml");
 
-// Load environment variables
 dotenv.config();
 
-// Connect to database
-connectDB();
+const productRoutes = require("./routes/productRoutes");
+const categoryRoutes = require("./routes/categoryRoutes");
+const userRoutes = require("./routes/userRoutes");
+const inventoryRoutes = require("./routes/inventoryRoutes");
+
+const authMiddleware = require("./middleware/authMiddleware");
+const rateLimiter = require("./middleware/rateLimiter");
+const errorMiddleware = require("./middleware/errorMiddleware");
 
 const app = express();
 
-// Middleware
 app.use(express.json());
+app.use(cors());
+app.use(rateLimiter);
 
-// Make uploads folder accessible
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+const swaggerDocument = YAML.load("./config/swagger.yml");
+app.use("/api-docs", swaggerUI.serve, swaggerUI.setup(swaggerDocument));
 
-// API Routes
 app.use("/api/products", productRoutes);
 app.use("/api/categories", categoryRoutes);
-app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/inventory", inventoryRoutes);
+app.use(errorMiddleware);
 
-// Swagger API Documentation
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
-
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({
-    success: false,
-    message: "Server Error",
-    error: process.env.NODE_ENV === "development" ? err.message : undefined,
-  });
-});
+mongoose
+  .connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => console.log("Database connected successfully"))
+  .catch((error) => console.log("Database connection failed:"));
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
+  console.log(`API Docs available at http://localhost:${PORT}/api-docs`);
+});

@@ -1,22 +1,23 @@
 const Product = require("../models/Product");
-const Category = require("../models/Category");
+const Inventory = require("../models/Inventory");
 
-exports.createProduct = async (req, res) => {
+exports.createProduct = async (req, res, next) => {
   try {
-    const { name, description, price, category, stockQuantity, variants } =
-      req.body;
+    const {
+      name,
+      description,
+      price,
+      category,
+      stockQuantity,
+      imageUrls,
+      variants,
+    } = req.body;
 
-    const images = req.files
-      ? req.files.map((file) => `/uploads/${file.filename}`)
-      : [];
-
-    if (category) {
-      const existingCategory = await Category.findById(category);
-      if (!existingCategory) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Category not found" });
-      }
+    if (!name || !price || !category) {
+      return res.status(400).json({
+        success: false,
+        message: "Name, price, and category are required fields",
+      });
     }
 
     const product = new Product({
@@ -24,118 +25,82 @@ exports.createProduct = async (req, res) => {
       description,
       price,
       category,
-      stockQuantity,
-      variants: variants ? JSON.parse(variants) : [],
-      images,
+      stockQuantity: stockQuantity || 0, // Ensure stock is handled properly
+      imageUrls,
+      variants: variants || [], // Ensure variants are properly stored
     });
 
     await product.save();
-    res.status(201).json({ success: true, data: product });
+
+    // Save stock in Inventory if using a separate model
+    await Inventory.create({
+      product: product._id,
+      stockQuantity: stockQuantity || 0,
+    });
+
+    res.status(201).json({ success: true, product });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    next(error);
   }
 };
 
-exports.getAllProducts = async (req, res) => {
+exports.getProducts = async (req, res, next) => {
   try {
-    const { name, category, minPrice, maxPrice, inStock } = req.query;
-
-    const query = {};
-
-    if (name) query.name = { $regex: name, $options: "i" };
-    if (category) query.category = category;
-    if (minPrice || maxPrice) {
-      query.price = {};
-      if (minPrice) query.price.$gte = parseFloat(minPrice);
-      if (maxPrice) query.price.$lte = parseFloat(maxPrice);
-    }
-    if (inStock === "true") query.stockQuantity = { $gt: 0 };
-
-    const products = await Product.find(query).populate("category");
-    res.json({ success: true, count: products.length, data: products });
+    const products = await Product.find().populate("category");
+    res.status(200).json({ success: true, products });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    next(error);
   }
 };
 
-exports.getProductById = async (req, res) => {
+exports.getProductById = async (req, res, next) => {
   try {
     const product = await Product.findById(req.params.id).populate("category");
-
-    if (!product) {
+    if (!product)
       return res
         .status(404)
         .json({ success: false, message: "Product not found" });
-    }
 
-    res.json({ success: true, data: product });
+    res.status(200).json({ success: true, product });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    next(error);
   }
 };
 
-exports.updateProduct = async (req, res) => {
+exports.updateProduct = async (req, res, next) => {
   try {
-    const { name, description, price, category, stockQuantity, variants } =
-      req.body;
-    let images = [];
-    if (req.files && req.files.length > 0) {
-      images = req.files.map((file) => `/uploads/${file.filename}`);
-    }
-
-    const productData = {
-      name,
-      description,
-      price,
-      category,
-      stockQuantity,
-    };
-
-    if (variants) productData.variants = JSON.parse(variants);
-    if (images.length > 0) productData.images = images;
-
-    const product = await Product.findByIdAndUpdate(
+    const updatedProduct = await Product.findByIdAndUpdate(
       req.params.id,
-      productData,
-      { new: true, runValidators: true }
-    ).populate("category");
+      req.body,
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
 
-    if (!product) {
+    if (!updatedProduct)
       return res
         .status(404)
         .json({ success: false, message: "Product not found" });
-    }
 
-    res.json({ success: true, data: product });
+    res.status(200).json({ success: true, product: updatedProduct });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    next(error);
   }
 };
-exports.deleteProduct = async (req, res) => {
-  try {
-    const product = await Product.findByIdAndDelete(req.params.id);
 
-    if (!product) {
+exports.deleteProduct = async (req, res, next) => {
+  try {
+    const deletedProduct = await Product.findByIdAndDelete(req.params.id);
+    if (!deletedProduct)
       return res
         .status(404)
         .json({ success: false, message: "Product not found" });
-    }
 
-    res.json({ success: true, data: {} });
+    res
+      .status(200)
+      .json({ success: true, message: "Product deleted successfully" });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-exports.getLowStockProducts = async (req, res) => {
-  try {
-    const threshold = parseInt(req.query.threshold) || 10;
-
-    const products = await Product.find({
-      stockQuantity: { $lte: threshold },
-    }).populate("category");
-
-    res.json({ success: true, count: products.length, data: products });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    next(error);
   }
 };

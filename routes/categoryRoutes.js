@@ -9,14 +9,14 @@ const {
 } = require("../controllers/categoryController");
 const auth = require("../middleware/authMiddleware");
 
-router.post("/", auth, createCategory);
+router.post("/", createCategory);
 
 router.get("/", getAllCategories);
 
 router.get("/:id", getCategoryById);
 
-router.put("/:id", auth, updateCategory);
+router.put("/:id", updateCategory);
 
-router.delete("/:id", auth, deleteCategory);
+router.delete("/:id", deleteCategory);
 
 module.exports = router;
