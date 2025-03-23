@@ -1,19 +1,17 @@
 const Inventory = require("../models/Inventory");
 const Product = require("../models/Product");
 
-// Create Inventory Entry
 exports.createInventory = async (req, res) => {
   try {
     const { productId, variant, quantity, lowStockThreshold } = req.body;
 
-    // Check if product exists
     const existingProduct = await Product.findById(productId);
     if (!existingProduct) {
       return res.status(404).json({ error: "Product not found" });
     }
 
     const inventory = await Inventory.create({
-      product: productId, // Using productId from request and setting it to product field
+      product: productId,
       variant,
       quantity,
       lowStockThreshold,
@@ -24,7 +22,6 @@ exports.createInventory = async (req, res) => {
   }
 };
 
-// Get All Inventory Items
 exports.getAllInventory = async (req, res) => {
   try {
     const inventory = await Inventory.find().populate("product");
@@ -34,7 +31,6 @@ exports.getAllInventory = async (req, res) => {
   }
 };
 
-// Get Inventory by Product ID
 exports.getInventoryByProductId = async (req, res) => {
   try {
     const inventory = await Inventory.find({
@@ -51,7 +47,6 @@ exports.getInventoryByProductId = async (req, res) => {
   }
 };
 
-// Update Inventory
 exports.updateInventory = async (req, res) => {
   try {
     const inventory = await Inventory.findByIdAndUpdate(
@@ -68,7 +63,6 @@ exports.updateInventory = async (req, res) => {
   }
 };
 
-// Delete Inventory
 exports.deleteInventory = async (req, res) => {
   try {
     const inventory = await Inventory.findByIdAndDelete(req.params.id);
@@ -81,10 +75,8 @@ exports.deleteInventory = async (req, res) => {
   }
 };
 
-// Get Low Stock Items
 exports.getLowStockItems = async (req, res) => {
   try {
-    // Fixed the query for low stock comparison
     const lowStockItems = await Inventory.find({
       $expr: { $lte: ["$quantity", "$lowStockThreshold"] },
     }).populate("product");
